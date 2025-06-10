@@ -83,6 +83,8 @@ def normalize_text(df):
 
 # 5. Tokenisasi, stopword removal, stemming
 def tokenize_stop_stem(df):
+    import nltk
+    nltk.download('stopwords')
     nltk_stopwords = set(stopwords.words('indonesian'))
     factory = StemmerFactory()
     stemmer = factory.create_stemmer()

@@ -7,3 +7,4 @@ nltk
 wordcloud
 Sastrawi
 requests
+openpyxl

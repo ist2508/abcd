@@ -8,6 +8,8 @@ from visualization import create_wordcloud, plot_sentiment_distribution, plot_to
 from utils import read_csv_safely
 import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report
+import nltk
+nltk.download('stopwords')
 
 st.set_page_config(page_title="Analisis Sentimen Menggunakan Naive Bayes", layout="wide")
 st.title("📊 Analisis Sentimen Menggunakan Naive Bayes")

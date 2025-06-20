@@ -26,6 +26,26 @@ def run_naive_bayes(labelled_file="Hasil_Labelling_Data.csv"):
     mnb.fit(X_train, y_train)
     y_pred = mnb.predict(X_test)
 
+        # Info hasil splitting
+    print("📊 Jumlah data latih:", X_train.shape[0])
+    print("📊 Jumlah data uji:", X_test.shape[0])
+
+    # Probabilitas prior (log)
+    print("🔢 Log Probabilitas Prior:")
+    for cls, logp in zip(mnb.classes_, mnb.class_log_prior_):
+        print(f"  {cls}: {logp:.4f}")
+
+    # Probabilitas kondisional (log)
+    print("\n🔢 Log Probabilitas Kondisional (fitur per kelas):")
+    for i, cls in enumerate(mnb.classes_):
+        print(f"\nKelas '{cls}':")
+        print(mnb.feature_log_prob_[i])
+
+    # Probabilitas posterior contoh data uji pertama
+    print("\n🔍 Probabilitas Posterior (contoh prediksi pertama):")
+    log_proba = mnb.predict_log_proba(X_test[:1])
+    print(f"Log Probabilitas: {log_proba}")
+
     # Evaluasi
     conf_matrix = confusion_matrix(y_test, y_pred, labels=['Negatif', 'Netral', 'Positif'])
     class_report = classification_report(y_test, y_pred)

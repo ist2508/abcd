@@ -1,4 +1,5 @@
 import pandas as pd
+import streamlit as st
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
@@ -26,39 +27,39 @@ def run_naive_bayes(labelled_file="Hasil_Labelling_Data.csv"):
     mnb.fit(X_train, y_train)
     y_pred = mnb.predict(X_test)
 
-        # Info hasil splitting
-    print("📊 Jumlah data latih:", X_train.shape[0])
-    print("📊 Jumlah data uji:", X_test.shape[0])
+    # Tampilkan hasil split
+    st.subheader("📊 Hasil Splitting Dataset")
+    st.text(f"Jumlah data latih: {X_train.shape[0]}")
+    st.text(f"Jumlah data uji: {X_test.shape[0]}")
 
-    # Probabilitas prior (log)
-    print("🔢 Log Probabilitas Prior:")
+    # Probabilitas prior
+    st.subheader("🔢 Log Probabilitas Prior")
     for cls, logp in zip(mnb.classes_, mnb.class_log_prior_):
-        print(f"  {cls}: {logp:.4f}")
+        st.text(f"{cls}: {logp:.4f}")
 
-    # Probabilitas kondisional (log)
-    print("\n🔢 Log Probabilitas Kondisional (fitur per kelas):")
+    # Probabilitas kondisional
+    st.subheader("🔢 Log Probabilitas Kondisional (fitur per kelas)")
     for i, cls in enumerate(mnb.classes_):
-        print(f"\nKelas '{cls}':")
-        print(mnb.feature_log_prob_[i])
+        st.text(f"Kelas '{cls}':")
+        st.code(mnb.feature_log_prob_[i][:10], language="text")  # tampilkan 10 fitur pertama
 
-    # Probabilitas posterior contoh data uji pertama
-    print("\n🔍 Probabilitas Posterior (contoh prediksi pertama):")
+    # Probabilitas posterior
+    st.subheader("🔍 Probabilitas Posterior (Contoh Prediksi Pertama)")
     log_proba = mnb.predict_log_proba(X_test[:1])
-    print(f"Log Probabilitas: {log_proba}")
+    st.code(str(log_proba), language="text")
 
     # Evaluasi
     conf_matrix = confusion_matrix(y_test, y_pred, labels=['Negatif', 'Netral', 'Positif'])
     class_report = classification_report(y_test, y_pred)
     accuracy = accuracy_score(y_test, y_pred)
 
-    print("✅ Evaluasi MultinomialNB")
-    print("Akurasi:", accuracy)
-    print("\n", class_report)
-
-    # Pastikan folder hasil/ ada
-    os.makedirs("hasil", exist_ok=True)
+    st.subheader("✅ Evaluasi Model")
+    st.text(f"Akurasi: {accuracy:.4f}")
+    st.text("Classification Report:")
+    st.code(class_report)
 
     # Simpan confusion matrix sebagai gambar
+    os.makedirs("hasil", exist_ok=True)
     plt.figure(figsize=(6, 4))
     sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues',
                 xticklabels=['Negatif', 'Netral', 'Positif'],
@@ -69,7 +70,9 @@ def run_naive_bayes(labelled_file="Hasil_Labelling_Data.csv"):
     plt.tight_layout()
     plt.savefig("hasil/conf_matrix_mnb.png")
     plt.close()
-    print("📊 Confusion Matrix disimpan sebagai hasil/conf_matrix_mnb.png")
+
+    st.subheader("📊 Confusion Matrix")
+    st.image("hasil/conf_matrix_mnb.png")
 
     # Simpan hasil prediksi
     result_df = pd.DataFrame({
@@ -78,6 +81,6 @@ def run_naive_bayes(labelled_file="Hasil_Labelling_Data.csv"):
         'Predicted': y_pred
     })
     result_df.to_csv("hasil/Hasil_pred_MultinomialNB.csv", index=False, encoding='utf8')
-    print("📄 Hasil prediksi disimpan sebagai hasil/Hasil_pred_MultinomialNB.csv")
+    st.success("📄 Hasil prediksi disimpan sebagai hasil/Hasil_pred_MultinomialNB.csv")
 
     return accuracy, class_report, conf_matrix, result_df

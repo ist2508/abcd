@@ -27,17 +27,24 @@ def run_naive_bayes(labelled_file="Hasil_Labelling_Data.csv"):
     mnb.fit(X_train, y_train)
     y_pred = mnb.predict(X_test)
 
-    # Keterangan tambahan untuk Streamlit
-    split_info = f"Jumlah data latih: {X_train.shape[0]}\nJumlah data uji: {X_test.shape[0]}"
+    # Info hasil split
+    split_info = {
+        "Jumlah Data Latih": X_train.shape[0],
+        "Jumlah Data Uji": X_test.shape[0]
+    }
 
-    log_prior_info = "\n".join([f"{cls}: {logp:.4f}" for cls, logp in zip(mnb.classes_, mnb.class_log_prior_)])
+    # Probabilitas prior (log)
+    log_prior_info = {
+        cls: logp for cls, logp in zip(mnb.classes_, mnb.class_log_prior_)
+    }
 
-    cond_info = ""
-    for i, cls in enumerate(mnb.classes_):
-        cond_info += f"Kelas '{cls}':\n{mnb.feature_log_prob_[i][:10]}\n"
+    # Probabilitas kondisional (10 fitur pertama per kelas)
+    log_conditional_info = {
+        cls: mnb.feature_log_prob_[i][:10] for i, cls in enumerate(mnb.classes_)
+    }
 
-    log_proba = mnb.predict_log_proba(X_test[:1])
-    post_info = str(log_proba)
+    # Probabilitas posterior contoh data uji pertama
+    log_posterior = mnb.predict_log_proba(X_test[:1])
 
     # Evaluasi
     conf_matrix = confusion_matrix(y_test, y_pred, labels=['Negatif', 'Netral', 'Positif'])
@@ -65,4 +72,4 @@ def run_naive_bayes(labelled_file="Hasil_Labelling_Data.csv"):
     })
     result_df.to_csv("hasil/Hasil_pred_MultinomialNB.csv", index=False, encoding='utf8')
 
-    return accuracy, class_report, conf_matrix, result_df, split_info, log_prior_info, cond_info, post_info
+    return accuracy, class_report, conf_matrix, result_df, split_info, log_prior_info, log_conditional_info, log_posterior

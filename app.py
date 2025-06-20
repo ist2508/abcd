@@ -71,30 +71,37 @@ with model_tab:
     st.subheader("📈 Naive Bayes (Multinomial)")
     if st.button("🔍 Jalankan Model Naive Bayes"):
         with st.spinner("Melatih dan mengevaluasi model..."):
-            accuracy, report, conf_matrix, result_df, split_info, log_prior_info, log_conditional_info, log_posterior = run_naive_bayes()
+            accuracy, report, conf_matrix, result_df, prior_prob, cond_pos, cond_neg, cond_net, posterior = run_naive_bayes()
             st.session_state.accuracy = accuracy
             st.session_state.report = report
             st.session_state.df_pred = result_df
-            st.session_state.split_info = split_info
-            st.session_state.log_prior_info = log_prior_info
-            st.session_state.log_conditional_info = log_conditional_info
-            st.session_state.log_posterior = log_posterior
+            st.session_state.prior_prob = prior_prob
+            st.session_state.cond_pos = cond_pos
+            st.session_state.cond_neg = cond_neg
+            st.session_state.cond_net = cond_net
+            st.session_state.posterior = posterior
             st.success(f"✅ Akurasi Model: {accuracy:.2f}")
 
-    if 'report' in st.session_state:
-        st.subheader("📊 Hasil Splitting Dataset")
-        st.write(st.session_state.split_info)
+    if all(k in st.session_state for k in ['prior_prob', 'cond_pos', 'cond_neg', 'cond_net', 'posterior']):
+        show_details = st.checkbox("📘 Tampilkan Detail Probabilitas", value=False)
+        if show_details:
+            st.subheader("📊 Probabilitas Prior (Manual)")
+            st.write(st.session_state.prior_prob)
 
-        st.subheader("🔢 Log Probabilitas Prior")
-        st.write(st.session_state.log_prior_info)
+            st.subheader("🔢 Probabilitas Kondisional (10 kata pertama) - Positif")
+            cond_df_pos = pd.DataFrame(list(st.session_state.cond_pos.items()), columns=['Kata', 'Probabilitas']).head(10)
+            st.dataframe(cond_df_pos)
 
-        st.subheader("🔢 Log Probabilitas Kondisional (10 fitur pertama per kelas)")
-        for kelas, log_values in st.session_state.log_conditional_info.items():
-            st.text(f"Kelas '{kelas}':")
-            st.code(log_values)
+            st.subheader("🔢 Probabilitas Kondisional (10 kata pertama) - Negatif")
+            cond_df_neg = pd.DataFrame(list(st.session_state.cond_neg.items()), columns=['Kata', 'Probabilitas']).head(10)
+            st.dataframe(cond_df_neg)
 
-        st.subheader("🔍 Probabilitas Posterior (Contoh Prediksi Pertama)")
-        st.code(st.session_state.log_posterior)
+            st.subheader("🔢 Probabilitas Kondisional (10 kata pertama) - Netral")
+            cond_df_net = pd.DataFrame(list(st.session_state.cond_net.items()), columns=['Kata', 'Probabilitas']).head(10)
+            st.dataframe(cond_df_net)
+
+            st.subheader("🔍 Probabilitas Posterior (Dokumen Uji Pertama)")
+            st.write(st.session_state.posterior)
 
         with st.expander("📊 Laporan Evaluasi"):
             report_dict = classification_report(

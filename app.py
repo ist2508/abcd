@@ -75,24 +75,14 @@ with model_tab:
             st.session_state.accuracy = accuracy
             st.session_state.report = report
             st.session_state.df_pred = result_df
-            st.success(f"✅ Akurasi Model: {accuracy:.2f}")
 
-    if 'report' in st.session_state:
-        with st.expander("📊 Laporan Evaluasi"):
-            report_dict = classification_report(
-                st.session_state.df_pred['Actual'],
-                st.session_state.df_pred['Predicted'],
-                output_dict=True
-            )
-            report_df = pd.DataFrame(report_dict).transpose()
-            selected_cols = ['precision', 'recall', 'f1-score', 'support']
-            report_df = report_df[selected_cols].round(2)
-            st.dataframe(report_df)
+    if 'df_pred' in st.session_state:
+        st.success(f"✅ Akurasi Model: {st.session_state.accuracy:.4f}")
 
-        with st.expander("📄 Hasil Prediksi"):
+        with st.expander("📄 Hasil Prediksi (5 data teratas)"):
             st.dataframe(st.session_state.df_pred.head())
 
-        # Tambahkan Visualisasi Diagram Batang Hasil Prediksi
+        # Tambahkan Diagram Batang
         st.subheader("📊 Diagram Batang Prediksi Sentimen")
         sentiment_distribution = st.session_state.df_pred['Predicted'].value_counts()
         fig, ax = plt.subplots(figsize=(7, 5))
@@ -102,17 +92,21 @@ with model_tab:
         ax.set_ylabel('Jumlah Tweet')
         ax.set_xticks(range(len(sentiment_distribution.index)))
         ax.set_xticklabels(sentiment_distribution.index)
-
         for bar in bars:
             yval = bar.get_height()
             ax.text(bar.get_x() + bar.get_width()/2, yval + 5, round(yval, 2), ha='center', va='bottom')
-
         st.pyplot(fig)
 
-    hasil_file = "hasil/Hasil_pred_MultinomialNB.csv"
-    if os.path.exists(hasil_file):
-        with open(hasil_file, "rb") as f:
-            st.download_button("⬇️ Unduh Hasil Prediksi", f, file_name="hasil_sentimen.csv", mime="text/csv")
+        # Tampilkan confusion matrix
+        if os.path.exists("hasil/conf_matrix_mnb.png"):
+            st.subheader("📌 Confusion Matrix")
+            st.image("hasil/conf_matrix_mnb.png")
+
+        # Tombol unduh
+        hasil_file = "hasil/Hasil_pred_MultinomialNB.csv"
+        if os.path.exists(hasil_file):
+            with open(hasil_file, "rb") as f:
+                st.download_button("⬇️ Unduh Hasil Prediksi", f, file_name="hasil_sentimen.csv", mime="text/csv")
 
 # ===========================
 # TAB 5: VISUALISASI
@@ -150,4 +144,3 @@ with visual_tab:
                 st.image("hasil/top_words_positif.png", caption="Top Words Positif")
 
         st.image("hasil/sentimen_distribution.png", caption="Distribusi Sentimen")
-        st.image("hasil/conf_matrix_mnb.png", caption="Confusion Matrix MultinomialNB")

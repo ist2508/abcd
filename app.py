@@ -12,22 +12,22 @@ import nltk
 nltk.download('stopwords')
 
 st.set_page_config(page_title="Analisis Sentimen Menggunakan Naive Bayes", layout="wide")
-st.title("📊 Analisis Sentimen Menggunakan Naive Bayes")
+st.title("\U0001F4CA Analisis Sentimen Menggunakan Naive Bayes")
 
 # Tabs untuk navigasi
 upload_tab, preprocess_tab, label_tab, model_tab, visual_tab = st.tabs([
-    "📂 Upload Data",
-    "🔄 Preprocessing",
-    "🏷️ Labeling",
-    "📈 Model Naive Bayes",
-    "🖼️ Visualisasi"
+    "\U0001F4C2 Upload Data",
+    "\U0001F504 Preprocessing",
+    "\U0001F3F7️ Labeling",
+    "\U0001F4C8 Model Naive Bayes",
+    "\U0001F5BC️ Visualisasi"
 ])
 
 # ===========================
 # TAB 1: UPLOAD DATA
 # ===========================
 with upload_tab:
-    st.subheader("📂 Unggah File CSV")
+    st.subheader("\U0001F4C2 Unggah File CSV")
     uploaded_file = st.file_uploader("Unggah file CSV Tweet", type="csv")
     if uploaded_file is not None:
         with open("dataMakanSiangGratis.csv", "wb") as f:
@@ -38,51 +38,77 @@ with upload_tab:
 # TAB 2: PREPROCESSING
 # ===========================
 with preprocess_tab:
-    st.subheader("🔄 Tahap Preprocessing")
-    if st.button("🚀 Jalankan Preprocessing"):
+    st.subheader("\U0001F504 Tahap Preprocessing")
+    if st.button("\U0001F680 Jalankan Preprocessing"):
         with st.spinner("Sedang memproses data..."):
             df_preprocessed = run_full_preprocessing("dataMakanSiangGratis.csv")
             st.session_state.df_preprocessed = df_preprocessed
             st.success("✅ Preprocessing selesai.")
 
     if 'df_preprocessed' in st.session_state:
-        with st.expander("📄 Lihat Hasil Preprocessing"):
+        with st.expander("\U0001F4C4 Lihat Hasil Preprocessing"):
             st.dataframe(st.session_state.df_preprocessed.head())
 
 # ===========================
 # TAB 3: LABELING
 # ===========================
 with label_tab:
-    st.subheader("🏷️ Tahap Labeling Sentimen")
-    if st.button("🏷️ Jalankan Labeling"):
+    st.subheader("\U0001F3F7️ Tahap Labeling Sentimen")
+    if st.button("\U0001F3F7️ Jalankan Labeling"):
         with st.spinner("Menentukan sentimen berdasarkan lexicon..."):
             df_labelled = run_labeling()
             st.session_state.df_labelled = df_labelled
             st.success("✅ Labeling selesai.")
 
     if 'df_labelled' in st.session_state:
-        with st.expander("📄 Lihat Hasil Labeling"):
+        with st.expander("\U0001F4C4 Lihat Hasil Labeling"):
             st.dataframe(st.session_state.df_labelled.head())
 
 # ===========================
 # TAB 4: MODELING
 # ===========================
 with model_tab:
-    st.subheader("📈 Naive Bayes (Multinomial)")
-    if st.button("🔍 Jalankan Model Naive Bayes"):
+    st.subheader("\U0001F4C8 Naive Bayes (Multinomial)")
+    if st.button("\U0001F50D Jalankan Model Naive Bayes"):
         with st.spinner("Melatih dan mengevaluasi model..."):
-            accuracy, report, conf_matrix, result_df = run_naive_bayes()
+            accuracy, report, conf_matrix, result_df, split_info, log_prior_info, cond_info, post_info = run_naive_bayes()
             st.session_state.accuracy = accuracy
             st.session_state.report = report
             st.session_state.df_pred = result_df
+            st.session_state.split_info = split_info
+            st.session_state.log_prior_info = log_prior_info
+            st.session_state.cond_info = cond_info
+            st.session_state.post_info = post_info
+            st.success(f"✅ Akurasi Model: {accuracy:.2f}")
 
-    if 'df_pred' in st.session_state:
-        st.success(f"✅ Akurasi Model: {st.session_state.accuracy:.4f}")
+    if 'report' in st.session_state:
+        st.subheader("📊 Hasil Splitting Dataset")
+        st.text(st.session_state.split_info)
 
-        with st.expander("📄 Hasil Prediksi (5 data teratas)"):
+        st.subheader("🔢 Log Probabilitas Prior")
+        st.text(st.session_state.log_prior_info)
+
+        st.subheader("🔢 Log Probabilitas Kondisional (fitur per kelas)")
+        st.text(st.session_state.cond_info)
+
+        st.subheader("🔍 Probabilitas Posterior (Contoh Prediksi Pertama)")
+        st.text(st.session_state.post_info)
+
+        with st.expander("📄 Hasil Prediksi"):
             st.dataframe(st.session_state.df_pred.head())
 
-        # Tambahkan Diagram Batang
+        report_dict = classification_report(
+            st.session_state.df_pred['Actual'],
+            st.session_state.df_pred['Predicted'],
+            output_dict=True
+        )
+        report_df = pd.DataFrame(report_dict).transpose()[['precision', 'recall', 'f1-score', 'support']].round(2)
+
+        with st.expander("📊 Laporan Evaluasi"):
+            st.dataframe(report_df)
+
+        st.image("hasil/conf_matrix_mnb.png", caption="Confusion Matrix MultinomialNB")
+
         st.subheader("📊 Diagram Batang Prediksi Sentimen")
         sentiment_distribution = st.session_state.df_pred['Predicted'].value_counts()
         fig, ax = plt.subplots(figsize=(7, 5))
@@ -97,23 +123,17 @@ with model_tab:
             ax.text(bar.get_x() + bar.get_width()/2, yval + 5, round(yval, 2), ha='center', va='bottom')
         st.pyplot(fig)
 
-        # Tampilkan confusion matrix
-        if os.path.exists("hasil/conf_matrix_mnb.png"):
-            st.subheader("📌 Confusion Matrix")
-            st.image("hasil/conf_matrix_mnb.png")
-
-        # Tombol unduh
-        hasil_file = "hasil/Hasil_pred_MultinomialNB.csv"
-        if os.path.exists(hasil_file):
-            with open(hasil_file, "rb") as f:
-                st.download_button("⬇️ Unduh Hasil Prediksi", f, file_name="hasil_sentimen.csv", mime="text/csv")
+    hasil_file = "hasil/Hasil_pred_MultinomialNB.csv"
+    if os.path.exists(hasil_file):
+        with open(hasil_file, "rb") as f:
+            st.download_button("⬇️ Unduh Hasil Prediksi", f, file_name="hasil_sentimen.csv", mime="text/csv")
 
 # ===========================
 # TAB 5: VISUALISASI
 # ===========================
 with visual_tab:
-    st.subheader("🖼️ Visualisasi Sentimen dan Kata")
-    if st.button("📊 Buat & Tampilkan Visualisasi"):
+    st.subheader("\U0001F5BC️ Visualisasi Sentimen dan Kata")
+    if st.button("\U0001F4CA Buat & Tampilkan Visualisasi"):
         with st.spinner("Membuat grafik dan wordcloud..."):
             df_vis = read_csv_safely("Hasil_Labelling_Data.csv")
             if df_vis is not None:
@@ -144,3 +164,4 @@ with visual_tab:
                 st.image("hasil/top_words_positif.png", caption="Top Words Positif")
 
         st.image("hasil/sentimen_distribution.png", caption="Distribusi Sentimen")
+        st.image("hasil/conf_matrix_mnb.png", caption="Confusion Matrix MultinomialNB")

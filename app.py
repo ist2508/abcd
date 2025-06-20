@@ -71,28 +71,30 @@ with model_tab:
     st.subheader("📈 Naive Bayes (Multinomial)")
     if st.button("🔍 Jalankan Model Naive Bayes"):
         with st.spinner("Melatih dan mengevaluasi model..."):
-            accuracy, report, conf_matrix, result_df, split_info, log_prior_info, cond_info, post_info = run_naive_bayes()
+            accuracy, report, conf_matrix, result_df, split_info, log_prior_info, log_conditional_info, log_posterior = run_naive_bayes()
             st.session_state.accuracy = accuracy
             st.session_state.report = report
             st.session_state.df_pred = result_df
             st.session_state.split_info = split_info
             st.session_state.log_prior_info = log_prior_info
-            st.session_state.cond_info = cond_info
-            st.session_state.post_info = post_info
+            st.session_state.log_conditional_info = log_conditional_info
+            st.session_state.log_posterior = log_posterior
             st.success(f"✅ Akurasi Model: {accuracy:.2f}")
 
     if 'report' in st.session_state:
         st.subheader("📊 Hasil Splitting Dataset")
-        st.text(st.session_state.split_info)
+        st.write(st.session_state.split_info)
 
         st.subheader("🔢 Log Probabilitas Prior")
-        st.text(st.session_state.log_prior_info)
+        st.write(st.session_state.log_prior_info)
 
-        st.subheader("🔢 Log Probabilitas Kondisional (fitur per kelas)")
-        st.text(st.session_state.cond_info)
+        st.subheader("🔢 Log Probabilitas Kondisional (10 fitur pertama per kelas)")
+        for kelas, log_values in st.session_state.log_conditional_info.items():
+            st.text(f"Kelas '{kelas}':")
+            st.code(log_values)
 
         st.subheader("🔍 Probabilitas Posterior (Contoh Prediksi Pertama)")
-        st.code(st.session_state.post_info)
+        st.code(st.session_state.log_posterior)
 
         with st.expander("📊 Laporan Evaluasi"):
             report_dict = classification_report(
@@ -117,15 +119,17 @@ with model_tab:
         ax.set_ylabel('Jumlah Tweet')
         ax.set_xticks(range(len(sentiment_distribution.index)))
         ax.set_xticklabels(sentiment_distribution.index)
+
         for bar in bars:
             yval = bar.get_height()
-            ax.text(bar.get_x() + bar.get_width()/2, yval + 1, round(yval, 2), ha='center', va='bottom')
+            ax.text(bar.get_x() + bar.get_width()/2, yval + 5, round(yval, 2), ha='center', va='bottom')
+
         st.pyplot(fig)
 
-        hasil_file = "hasil/Hasil_pred_MultinomialNB.csv"
-        if os.path.exists(hasil_file):
-            with open(hasil_file, "rb") as f:
-                st.download_button("⬇️ Unduh Hasil Prediksi", f, file_name="hasil_sentimen.csv", mime="text/csv")
+    hasil_file = "hasil/Hasil_pred_MultinomialNB.csv"
+    if os.path.exists(hasil_file):
+        with open(hasil_file, "rb") as f:
+            st.download_button("⬇️ Unduh Hasil Prediksi", f, file_name="hasil_sentimen.csv", mime="text/csv")
 
 # ===========================
 # TAB 5: VISUALISASI
